@@ -13,10 +13,9 @@ DETR model and criterion classes.
 """
 import copy
 import math
-import numpy as np
 import torch
 import torch.nn.functional as F
-from torch import nn, Tensor
+from torch import nn
 from typing import List
 import math
 from util import box_ops
@@ -25,8 +24,6 @@ from util.misc import (
     nested_tensor_from_tensor_list,
     accuracy,
     get_world_size,
-    interpolate,
-    get_rank,
     is_dist_avail_and_initialized,
     inverse_sigmoid,
 )
@@ -34,12 +31,10 @@ from util.misc import (
 from models.structures import (
     Instances,
     Boxes,
-    pairwise_iou,
     matched_boxlist_iou,
-    matched_boxlist_rotated_iou,
 )
 from .structures.conv_bn_relu import Conv_BN_ReLU
-from .Rotated_ROIAlign.roi_align_rotate import ROIAlignRotated
+from detectron2.layers.roi_align_rotated import ROIAlignRotated
 from .backbone import build_backbone
 from .matcher import build_matcher
 from .deformable_transformer_plus import build_deforamble_transformer

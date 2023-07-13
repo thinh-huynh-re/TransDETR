@@ -99,9 +99,6 @@ The codebases are built on top of [Deformable DETR](https://github.com/fundament
     ```bash
     cd ./models/ops
     sh ./make.sh
-	
-	cd ./models/Rotated_ROIAlign
-	python setup.py build_ext --inplace
     ```
 ## Usage
 

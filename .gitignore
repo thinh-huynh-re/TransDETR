@@ -5,3 +5,9 @@ weights/
 
 models/ops/build/
 models/ops/dist/
+models/ops/MultiScaleDeformableAttention.egg-info/
+models/Rotated_ROIAlign/build/
+models/Rotated_ROIAlign/rotated_roi.cpython-310-x86_64-linux-gnu.so
+
+installation/*
+!installation/.gitkeep

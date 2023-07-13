@@ -39,7 +39,7 @@ from models.structures import (
     matched_boxlist_rotated_iou,
 )
 from .structures.conv_bn_relu import Conv_BN_ReLU
-from .Rotated_ROIAlign.roi_align_rotate import ROIAlignRotated
+from detectron2.layers.roi_align_rotated import ROIAlignRotated
 from .backbone import build_backbone
 from .matcher import build_matcher
 from .deformable_transformer_plus import build_deforamble_transformer

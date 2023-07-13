@@ -11,7 +11,6 @@
 import numpy as np
 import cv2
 import string
-import mmcv
 import random
 import math
 
@@ -40,92 +39,6 @@ def check(s):
             continue
         return False
     return True
-
-
-def get_ann_ic15(img, gt_path):
-    # h, w = img.shape[0:2]
-    lines = mmcv.list_from_file(gt_path)
-    bboxes = []
-    words = []
-    for line in lines:
-        line = line.encode("utf-8").decode("utf-8-sig")
-        line = line.replace("\xef\xbb\xbf", "")
-        gt = line.split(",")
-        if len(gt) < 8:
-            gt = line.split("\t")
-        word = gt[8].replace("\r", "").replace("\n", "")
-        if len(word) == 0 or word[0] == "#":
-            words.append("###")
-        else:
-            words.append(word)
-
-        bbox = [int(float(gt[i])) for i in range(8)]
-        # bbox = np.array(bbox) / ([w * 1.0, h * 1.0] * 4)
-        bboxes.append(bbox)
-    return np.array(bboxes), words
-
-
-def get_ann_ic15_video(img, gt_path):
-    # h, w = img.shape[0:2]
-    lines = mmcv.list_from_file(gt_path)
-    bboxes = []
-    words = []
-    track_id = []
-    for line in lines:
-        line = line.encode("utf-8").decode("utf-8-sig")
-        line = line.replace("\xef\xbb\xbf", "")
-        gt = line.split(",")
-        if len(gt) < 8:
-            gt = line.split("\t")
-        word = gt[8].replace("\r", "").replace("\n", "")
-        if len(word) == 0 or word[0] == "#":
-            words.append("###")
-        else:
-            words.append(word)
-
-        t_id = gt[9].replace("\r", "").replace("\n", "")
-        track_id.append(t_id)
-        bbox = [int(float(gt[i])) for i in range(8)]
-        # bbox = np.array(bbox) / ([w * 1.0, h * 1.0] * 4)
-        bboxes.append(bbox)
-    return np.array(bboxes), words, track_id
-
-
-def get_ann_kwai_det(img, gt_path):
-    # h, w = img.shape[0:2]
-    lines = mmcv.list_from_file(gt_path)
-    bboxes = []
-    words = []
-    for line in lines:
-        line = line.encode("utf-8").decode("utf-8-sig")
-        line = line.replace("\xef\xbb\xbf", "")
-        gt = line.split("\t")
-        word = gt[8].replace("\r", "").replace("\n", "")
-        words.append(word)
-        bbox = [int(float(gt[i])) for i in range(8)]
-        # bbox = np.array(bbox) / ([w * 1.0, h * 1.0] * 4)
-        bboxes.append(bbox)
-    return np.array(bboxes), words
-
-
-def get_ann_mtwi(img, gt_path):
-    # h, w = img.shape[0:2]
-    lines = mmcv.list_from_file(gt_path)
-    bboxes = []
-    words = []
-    for line in lines:
-        line = line.encode("utf-8").decode("utf-8-sig")
-        line = line.replace("\xef\xbb\xbf", "")
-        gt = line.split(",")
-        word = ",".join(gt[8:]).replace("\r", "").replace("\n", "")
-        if len(word) == 0:
-            words.append("###")
-        else:
-            words.append(word)
-        bbox = [int(float(gt[i])) for i in range(8)]
-        # bbox = np.array(bbox) / ([w * 1.0, h * 1.0] * 4)
-        bboxes.append(bbox)
-    return np.array(bboxes), words
 
 
 def is_ver_word(bbox):

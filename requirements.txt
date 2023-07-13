@@ -6,3 +6,6 @@ tqdm
 moviepy
 scipy
 shapely
+pyclipper
+polygon
+Polygon3
