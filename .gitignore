@@ -2,3 +2,6 @@ __pycache__
 env
 data/
 weights/
+
+models/ops/build/
+models/ops/dist/
