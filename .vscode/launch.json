@@ -1,0 +1,92 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Extract frames from video",
+            "type": "python",
+            "request": "launch",
+            "program": "ExtractFrame_FromVideo.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Inference",
+            "type": "python",
+            "request": "launch",
+            "program": "inference.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "CUDA_VISIBLE_DEVICES": "2",
+                "EXP_DIR": "weights"
+            },
+            "args": [
+                "--thread_num",
+                "1",
+                "--meta_arch",
+                "TransDETR_ignored",
+                "--dataset_file",
+                "VideoText",
+                "--epoch",
+                "200",
+                "--with_box_refine",
+                "--lr_drop",
+                "100",
+                "--lr",
+                "2e-4",
+                "--lr_backbone",
+                "2e-5",
+                "--output_dir",
+                "data/outputs",
+                "--batch_size",
+                "1",
+                "--sample_mode",
+                "random_interval",
+                "--sample_interval",
+                "3",
+                "--sampler_steps",
+                "50",
+                "90",
+                "120",
+                "--sampler_lengths",
+                "2",
+                "3",
+                "4",
+                "5",
+                "--update_query_pos",
+                "--merger_dropout",
+                "0",
+                "--is_bilingual",
+                "--rec",
+                "--dropout",
+                "0",
+                "--random_drop",
+                "0.1",
+                "--fp_ratio",
+                "0.3",
+                "--query_interaction_layer",
+                "QIM",
+                "--extra_track_attn",
+                "--mot_path",
+                "/share/wuweijia/Data/VideoText/MOTR",
+                "--data_txt_path_train",
+                "./datasets/data_path/BOVText.train",
+                "--data_txt_path_val",
+                "./datasets/data_path/BOVText.train",
+                "--resume",
+                "weights/pretrain_COCOText_checkpoint.pth"
+            ]
+        }
+    ]
+}

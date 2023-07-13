@@ -3,3 +3,6 @@ torchvision
 Pillow
 opencv-python
 tqdm
+moviepy
+scipy
+shapely
