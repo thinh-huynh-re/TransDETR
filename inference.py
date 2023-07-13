@@ -15,7 +15,7 @@ from PIL import Image, ImageDraw
 from models import build_model
 
 from util.tool import load_model
-from main import get_args_parser
+from argparser import get_args_parser
 
 from util.evaluation import Evaluator
 from tqdm import tqdm
@@ -474,7 +474,7 @@ def load_img_from_file(f_path):
 
 
 class Detector(object):
-    def __init__(self, args, model=None, seq_num=2):
+    def __init__(self, args, model, seq_num: str):
         self.args = args
         self.detr = model
 
@@ -932,12 +932,14 @@ def sub_processor(pid: int, args, video_list: List[str]):
     detr = load_model(detr, args.resume)
     detr = detr.cuda()
     detr.eval()
+    
+    video_list = ['adv', 'tokyo_street']
 
     # 1. For each video
     for video in video_list:
         print(video)
         det = Detector(args, model=detr, seq_num=video)
-        time_cost = det.detect()
+        time_cost = det.detect(vis=args.show)
 
     return 0
 
@@ -978,9 +980,9 @@ if __name__ == "__main__":
 
     result_dict = mp.Manager().dict()
     mp = mp.get_context("spawn")
-    thread_num = args.thread_num
+    # thread_num = args.thread_num
     processes = []
-    per_thread_video_num = int(len(seq_nums) / thread_num)
+    # per_thread_video_num = int(len(seq_nums) / thread_num)
 
     print("Start inference")
     # for i in range(thread_num):

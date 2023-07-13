@@ -1234,57 +1234,57 @@ def build(args):
     num_frames_per_batch = max(args.sampler_lengths)
     weight_dict = {}
     for i in range(num_frames_per_batch):
-        if not args.only_rec:
-            weight_dict.update(
-                {
-                    "frame_{}_loss_ce".format(i): args.cls_loss_coef,
-                    "frame_{}_loss_bbox".format(i): args.bbox_loss_coef,
-                    "frame_{}_loss_giou".format(i): args.giou_loss_coef,
-                    "frame_{}_loss_angle".format(i): 50.0,
-                    "frame_{}_loss_rec".format(i): 5,
-                }
-            )
-        else:
+        # if not args.only_rec:
+        #     weight_dict.update(
+        #         {
+        #             "frame_{}_loss_ce".format(i): args.cls_loss_coef,
+        #             "frame_{}_loss_bbox".format(i): args.bbox_loss_coef,
+        #             "frame_{}_loss_giou".format(i): args.giou_loss_coef,
+        #             "frame_{}_loss_angle".format(i): 50.0,
+        #             "frame_{}_loss_rec".format(i): 5,
+        #         }
+        #     )
+        # else:
             # BOVText
-            weight_dict.update(
-                {
-                    "frame_{}_loss_ce".format(i): 0,
-                    "frame_{}_loss_bbox".format(i): 0,
-                    "frame_{}_loss_giou".format(i): 0,
-                    "frame_{}_loss_angle".format(i): 0,
-                    "frame_{}_loss_rec".format(i): 1,
-                }
-            )
+        weight_dict.update(
+            {
+                "frame_{}_loss_ce".format(i): 0,
+                "frame_{}_loss_bbox".format(i): 0,
+                "frame_{}_loss_giou".format(i): 0,
+                "frame_{}_loss_angle".format(i): 0,
+                "frame_{}_loss_rec".format(i): 1,
+            }
+        )
 
     # TODO this is a hack
     if args.aux_loss:
         for i in range(num_frames_per_batch):
             for j in range(args.dec_layers - 1):
-                if not args.only_rec:
-                    weight_dict.update(
-                        {
-                            "frame_{}_aux{}_loss_ce".format(i, j): args.cls_loss_coef,
-                            "frame_{}_aux{}_loss_bbox".format(
-                                i, j
-                            ): args.bbox_loss_coef,
-                            "frame_{}_aux{}_loss_giou".format(
-                                i, j
-                            ): args.giou_loss_coef,
-                            "frame_{}_aux{}_loss_angle".format(i, j): 50.0,
-                            "frame_{}_aux{}_loss_rec".format(i, j): 5,
-                        }
-                    )
-                else:
+                # if not args.only_rec:
+                #     weight_dict.update(
+                #         {
+                #             "frame_{}_aux{}_loss_ce".format(i, j): args.cls_loss_coef,
+                #             "frame_{}_aux{}_loss_bbox".format(
+                #                 i, j
+                #             ): args.bbox_loss_coef,
+                #             "frame_{}_aux{}_loss_giou".format(
+                #                 i, j
+                #             ): args.giou_loss_coef,
+                #             "frame_{}_aux{}_loss_angle".format(i, j): 50.0,
+                #             "frame_{}_aux{}_loss_rec".format(i, j): 5,
+                #         }
+                #     )
+                # else:
                     # BOVText
-                    weight_dict.update(
-                        {
-                            "frame_{}_aux{}_loss_ce".format(i, j): 0,
-                            "frame_{}_aux{}_loss_bbox".format(i, j): 0,
-                            "frame_{}_aux{}_loss_giou".format(i, j): 0,
-                            "frame_{}_aux{}_loss_angle".format(i, j): 0,
-                            "frame_{}_aux{}_loss_rec".format(i, j): 1,
-                        }
-                    )
+                weight_dict.update(
+                    {
+                        "frame_{}_aux{}_loss_ce".format(i, j): 0,
+                        "frame_{}_aux{}_loss_bbox".format(i, j): 0,
+                        "frame_{}_aux{}_loss_giou".format(i, j): 0,
+                        "frame_{}_aux{}_loss_angle".format(i, j): 0,
+                        "frame_{}_aux{}_loss_rec".format(i, j): 1,
+                    }
+                )
 
     if args.memory_bank_type is not None and len(args.memory_bank_type) > 0:
         memory_bank = build_memory_bank(args, d_model, hidden_dim, d_model * 2)

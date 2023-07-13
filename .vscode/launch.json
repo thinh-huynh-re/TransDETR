@@ -32,8 +32,6 @@
                 "EXP_DIR": "weights"
             },
             "args": [
-                "--thread_num",
-                "1",
                 "--meta_arch",
                 "TransDETR_ignored",
                 "--dataset_file",
@@ -67,7 +65,6 @@
                 "--update_query_pos",
                 "--merger_dropout",
                 "0",
-                "--is_bilingual",
                 "--rec",
                 "--dropout",
                 "0",
@@ -79,13 +76,14 @@
                 "QIM",
                 "--extra_track_attn",
                 "--mot_path",
-                "/share/wuweijia/Data/VideoText/MOTR",
+                "./data/frames/test",
                 "--data_txt_path_train",
                 "./datasets/data_path/BOVText.train",
                 "--data_txt_path_val",
                 "./datasets/data_path/BOVText.train",
                 "--resume",
-                "weights/pretrain_COCOText_checkpoint.pth"
+                "weights/pretrain_COCOText_checkpoint.pth",
+                "--show"
             ]
         }
     ]

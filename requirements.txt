@@ -9,3 +9,5 @@ shapely
 pyclipper
 polygon
 Polygon3
+seaborn
+motmetrics

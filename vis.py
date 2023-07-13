@@ -1,18 +1,9 @@
 # -*- coding: utf-8 -*-
-import cv2
 import os
-import copy
-import numpy as np
-import math
 
-# import Levenshtein
-from cv2 import VideoWriter, VideoWriter_fourcc
-import json
 from tqdm import tqdm
-from PIL import Image, ImageDraw, ImageFont
 import moviepy
 import moviepy.video.io.ImageSequenceClip
-import shutil
 from moviepy.editor import *
 
 
@@ -30,12 +21,8 @@ def pics2video(frames_dir="", fps=25):
     clip.write_videofile(frames_dir + ".mp4", codec="libx264")
 
 
-#     shutil.rmtree(frames_dir)
-
-
 if __name__ == "__main__":
-    #     image_path = "./exps/e2e_TransVTS_r50_COCOTextV2/results"   e2e_TransVTS_r50_SynthText   e2e_TransVTS_r50_ICDAR15   e2e_TransVTS_r50_BOVText
-    image_path = "./exps/e2e_TransVTS_r50_BOVText/results/Cls12_Interview"
+    image_path = "data/frames/test/adv"
     seqs = [
         "Video_20_5_1",
         "Video_6_3_2",
