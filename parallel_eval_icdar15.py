@@ -42,29 +42,21 @@ from models import build_model
 from util.tool import load_model
 from main import get_args_parser
 
-from torch.nn.functional import interpolate
-from typing import List
 from util.evaluation import Evaluator
-import motmetrics as mm
-import shutil
 from tqdm import tqdm
 import math
 import multiprocessing as mp
-import threading
 
-import torch.nn as nn
 from detectron2.structures import Instances
 from xml.dom.minidom import Document
 try:
     import xml.etree.cElementTree as ET  #解析xml的c语言版的模块
 except ImportError:
     import xml.etree.ElementTree as ET
-from thop import profile
 np.random.seed(2020)
 from datasets.data_tools import get_vocabulary
-from util.utils import write_result_as_txt,debug, setup_logger,write_lines,MyEncoder
+from util.utils import write_lines
 from collections import OrderedDict
-import nvgpu
 
 def plot_one_box(x, img, color=None, label=None, score=None, line_thickness=None):
     # Plots one bounding box on image img
