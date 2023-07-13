@@ -84,7 +84,7 @@ if f is not None:
             vf.release()
 
             os.system(
-                f'ffmpeg -y -i {out_path} -vcodec libx264 "{final_out_path}" -hide_banner -loglevel error'
+                f'ffmpeg -y -i "{out_path}" -vcodec libx264 "{final_out_path}" -hide_banner -loglevel error'
             )
             os.system(f"rm {out_path}")
 
