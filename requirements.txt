@@ -11,3 +11,4 @@ polygon
 Polygon3
 seaborn
 motmetrics
+typed-argument-parser

@@ -1,6 +1,7 @@
 absl-py==1.4.0
 addict==2.4.0
 antlr4-python3-runtime==4.9.3
+anyio==3.7.1
 black==23.7.0
 cachetools==5.3.1
 certifi==2023.5.7
@@ -13,12 +14,17 @@ contourpy==1.1.0
 cycler==0.11.0
 decorator==4.4.2
 -e git+http://ddd:5NzjwKaLsafcdBVpMsjD@source.cyberspace.vn/textvideospotter/detectron2.git@564ec7fa39db0f573d826ba791ffa574afaf4545#egg=detectron2
+docstring-parser==0.15
+exceptiongroup==1.1.2
 filelock==3.12.2
 fonttools==4.41.0
 fvcore==0.1.5.post20221221
 google-auth==2.22.0
 google-auth-oauthlib==1.0.0
 grpcio==1.56.0
+h11==0.14.0
+httpcore==0.17.3
+httpx==0.24.1
 hydra-core==1.3.2
 idna==3.4
 imageio==2.31.1
@@ -36,6 +42,7 @@ mdurl==0.1.2
 mmcv @ file:///data/ocr/thinhhnt/projects/TransDETR/installation/mmcv-2.0.0-cp310-cp310-manylinux1_x86_64.whl#sha256=3f1461c49c8d7337ccbddcff7637df154baa16fad71822df3bdc797353d31d04
 mmengine==0.8.2
 model-index==0.1.11
+motmetrics==1.4.0
 moviepy==1.0.3
 mpmath==1.3.0
 MultiScaleDeformableAttention==1.0
@@ -64,6 +71,8 @@ pandas==2.0.3
 pathspec==0.11.1
 Pillow==10.0.0
 platformdirs==3.8.1
+polygon==1.1.0
+Polygon3==3.0.9.1
 portalocker==2.7.0
 proglog==0.1.10
 protobuf==4.23.4
@@ -82,8 +91,10 @@ requests-oauthlib==1.3.1
 rich==13.4.2
 rsa==4.9
 scipy==1.11.1
+seaborn==0.12.2
 shapely==2.0.1
 six==1.16.0
+sniffio==1.3.0
 sympy==1.12
 tabulate==0.9.0
 tensorboard==2.13.0
@@ -94,10 +105,15 @@ torch==2.0.1
 torchvision==0.15.2
 tqdm==4.65.0
 triton==2.0.0
+typed-argument-parser==1.8.1
+typing-inspect==0.9.0
 typing_extensions==4.7.1
 tzdata==2023.3
 urllib3==1.26.16
+websocket-client==1.6.1
+websockets==11.0.3
 Werkzeug==2.3.6
+xmltodict==0.13.0
 yacs==0.1.8
 yapf==0.40.1
 zipp==3.16.1

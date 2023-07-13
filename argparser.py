@@ -1,5 +1,8 @@
 import argparse
+from typing import List, Optional
 import numpy as np
+
+from tap import Tap
 
 
 def get_args_parser():
@@ -23,7 +26,7 @@ def get_args_parser():
     parser.add_argument("--batch_size", default=2, type=int)
     parser.add_argument("--weight_decay", default=1e-4, type=float)
     parser.add_argument("--epochs", default=50, type=int)
-    parser.add_argument("--lr_drop", default=40, type=int)
+    parser.add_argument("--lr_drop", default=100, type=int)
     parser.add_argument("--save_period", default=50, type=int)
     parser.add_argument("--lr_drop_epochs", default=None, type=int, nargs="+")
     parser.add_argument(
@@ -244,3 +247,116 @@ def get_args_parser():
         "--memory_bank_with_self_attn", action="store_true", default=False
     )
     return parser
+
+
+class ArgParser(Tap):
+    lr: Optional[float] = 2e-4
+    lr_backbone_names: Optional[List[str]] = ["backbone.0"]
+    lr_backbone: Optional[float] = 2e-5
+    lr_linear_proj_names: Optional[List[str]] = [
+        "reference_points",
+        "sampling_offsets",
+    ]
+    is_bilingual: Optional[bool] = False
+    lr_linear_proj_mult: Optional[float] = 0.1
+    batch_size: Optional[int] = 1
+    weight_decay: Optional[float] = 1e-4
+    epochs: Optional[int] = 50
+    lr_drop: Optional[int] = 40
+    save_period: Optional[int] = 50
+    lr_drop_epochs: Optional[int] = None
+    clip_max_norm: Optional[float] = 0.1
+    meta_arch: Optional[str] = "TransDETR_ignored"
+    sgd: Optional[bool] = False
+
+    # Variants of Deformable DETR
+    with_box_refine: Optional[bool] = True
+    two_stage: Optional[bool] = False
+    accurate_ratio: Optional[bool] = False
+
+    # Model parameters
+    frozen_weights: Optional[str] = None
+    num_anchors: Optional[int] = 1
+
+    # Backbone
+    backbone: Optional[str] = "resnet50"
+    enable_fpn: Optional[bool] = False
+    dilation: Optional[bool] = False
+    position_embedding: Optional[str] = "sine"  # choices=("sine", "learned")
+    position_embedding_scale: Optional[float] = 2 * np.pi  # position / size * scale
+    num_feature_levels: Optional[int] = 4
+
+    # * Transformer
+    enc_layers: Optional[int] = 3
+    dec_layers: Optional[int] = 3
+    dim_feedforward: Optional[int] = 1024
+    hidden_dim: Optional[int] = 256
+    dropout: Optional[float] = 0
+    nheads: Optional[int] = 8
+    num_queries: Optional[int] = 100  # !!!
+
+    dec_n_points: Optional[int] = 4
+    enc_n_points: Optional[int] = 4
+    decoder_cross_self: Optional[bool] = False
+    sigmoid_attn: Optional[bool] = False
+    crop: Optional[bool] = False
+    cj: Optional[bool] = False
+    extra_track_attn: Optional[bool] = True
+    loss_normalizer: Optional[bool] = False
+
+    # * Segmentation
+    masks: Optional[bool] = False
+
+    # * recognition
+    rec: Optional[bool] = False
+
+    # Loss
+    aux_loss: Optional[bool] = True
+
+    # * Matcher
+    mix_match: Optional[bool] = False
+    set_cost_class: Optional[float] = 2
+    set_cost_bbox: Optional[float] = 5
+    set_cost_giou: Optional[float] = 2
+
+    # Loss coefficients
+    # skip
+
+    # dataset parameters
+    dataset_file: Optional[str] = "VideoText"
+    gt_file_train: Optional[str] = None
+    gt_file_val: Optional[str] = None
+    coco_path: Optional[str] = "detectron2/datasets/coco/"
+    coco_panoptic_path: Optional[str] = None
+    remove_difficult: Optional[bool] = False
+
+    output_dir: Optional[str] = "data/outputs"
+    device: Optional[str] = "cuda"
+    seed: Optional[int] = 42
+    resume: Optional[str] = "weights/pretrain_COCOText_checkpoint.pth"
+    start_epoch: Optional[int] = 0
+    eval: Optional[bool] = False
+    vis: Optional[bool] = False
+    show: Optional[bool] = False
+    num_workers: Optional[int] = 2
+    pretrained: Optional[str] = None
+    cache_mode: Optional[bool] = False
+
+    mot_path: Optional[str] = "./data/frames/test"
+    data_txt_path_train: Optional[str] = "./datasets/data_path/BOVText.train"
+    data_txt_path_val: Optional[str] = "./datasets/data_path/BOVText.train"
+    query_interaction_layer: Optional[str] = "QIM"
+    sample_mode: Optional[str] = "random_interval"
+    sample_interval: Optional[int] = 3
+    random_drop: Optional[float] = 0.1
+    fp_ratio: Optional[float] = 0.3
+    merger_dropout: Optional[float] = 0.0
+    update_query_pos: Optional[bool] = True
+
+    sampler_steps: Optional[List[int]] = [50, 90, 120]
+    sampler_lengths: Optional[List[int]] = [2, 3, 4, 5]
+    exp_name: Optional[str] = "submit"
+    memory_bank_score_thresh: Optional[float] = 0.0
+    memory_bank_len: Optional[int] = 4
+    memory_bank_type: Optional[str] = "MemoryBank"
+    memory_bank_with_self_attn: Optional[bool] = False

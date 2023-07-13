@@ -1,18 +1,15 @@
-# ------------------------------------------------------------------------
-# Copyright (c) 2021 megvii-model. All Rights Reserved.
-# ------------------------------------------------------------------------
-# Modified from Deformable DETR (https://github.com/fundamentalvision/Deformable-DETR)
-# Copyright (c) 2020 SenseTime. All Rights Reserved.
-# ------------------------------------------------------------------------
-# Modified from DETR (https://github.com/facebookresearch/detr)
-# Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
-# ------------------------------------------------------------------------
-
 import torch
-import numpy as np
+from torch import nn
 
 
-def load_model(model, model_path, optimizer=None, resume=False, lr=None, lr_step=None):
+def load_model(
+    model: nn.Module,
+    model_path: str,
+    optimizer=None,
+    resume=False,
+    lr=None,
+    lr_step=None,
+) -> nn.Module:
     start_epoch = 0
     checkpoint = torch.load(model_path, map_location=lambda storage, loc: storage)
     print(f"loaded {model_path}")

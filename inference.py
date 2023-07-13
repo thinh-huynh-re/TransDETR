@@ -5,7 +5,6 @@ import os
 
 import numpy as np
 import random
-import argparse
 import torchvision.transforms.functional as F
 import torch
 import json
@@ -15,15 +14,15 @@ from PIL import Image, ImageDraw
 from models import build_model
 
 from util.tool import load_model
-from argparser import get_args_parser
+from argparser import ArgParser
 
 from util.evaluation import Evaluator
 from tqdm import tqdm
 import math
-import multiprocessing as mp
 
 from detectron2.structures import Instances
 from xml.dom.minidom import Document
+from torch import nn
 
 try:
     import xml.etree.cElementTree as ET  # 解析xml的c语言版的模块
@@ -31,8 +30,6 @@ except ImportError:
     import xml.etree.ElementTree as ET
 np.random.seed(2020)
 from datasets.data_tools import get_vocabulary
-from util.utils import write_lines
-from collections import OrderedDict
 
 
 def plot_one_box(x, img, color=None, label=None, score=None, line_thickness=None):
@@ -47,22 +44,16 @@ def plot_one_box(x, img, color=None, label=None, score=None, line_thickness=None
 class StorageDictionary(object):
     @staticmethod
     def dict2file(file_name, data_dict):
-        try:
-            import cPickle as pickle
-        except ImportError:
-            import pickle
-        # import pickle
+        import pickle
+
         output = open(file_name, "wb")
         pickle.dump(data_dict, output)
         output.close()
 
     @staticmethod
     def file2dict(file_name):
-        try:
-            import cPickle as pickle
-        except ImportError:
-            import pickle
-        # import pickle
+        import pickle
+
         pkl_file = open(file_name, "rb")
         data_dict = pickle.load(pkl_file)
         pkl_file.close()
@@ -73,7 +64,6 @@ class StorageDictionary(object):
         import json, io
 
         with io.open(file_name, "w", encoding="utf-8") as fp:
-            # fp.write(unicode(json.dumps(data_dict, ensure_ascii=False, indent=4) ) )  #可以解决在文件里显示中文的问题，不加的话是 '\uxxxx\uxxxx'
             fp.write((json.dumps(data_dict, ensure_ascii=False, indent=4)))
 
     @staticmethod
@@ -101,9 +91,6 @@ def Generate_Json_annotation(TL_Cluster_Video_dict, Outpu_dir, xml_dir_):
 
         ICDAR21_DetectionTracks[frame] = []
         for text_list in TL_Cluster_Video_dict[frame]:
-            #             ICDAR21_DetectionTracks[frame].append({"points":text_list[:8],"ID":text_list[8],"transcription":text_list[9],
-            #                                                   "score":str(text_list[10]),
-            #                                                   "roi_feature":text_list[11]})
             ICDAR21_DetectionTracks[frame].append(
                 {
                     "points": text_list[:8],
@@ -376,77 +363,6 @@ def load_label(label_path: str, img_size: tuple) -> dict:
     targets["area"] = np.asarray(targets["area"])
     targets["labels"] = np.asarray(targets["labels"])
     return targets
-
-
-def filter_pub_det(res_file, pub_det_file, filter_iou=False):
-    frame_boxes = {}
-    with open(pub_det_file, "r") as f:
-        lines = f.readlines()
-        for line in lines:
-            if len(line) == 0:
-                continue
-            elements = line.strip().split(",")
-            frame_id = int(elements[0])
-            x1, y1, w, h = elements[2:6]
-            x1, y1, w, h = float(x1), float(y1), float(w), float(h)
-            x2 = x1 + w - 1
-            y2 = y1 + h - 1
-            if frame_id not in frame_boxes:
-                frame_boxes[frame_id] = []
-            frame_boxes[frame_id].append([x1, y1, x2, y2])
-
-    for frame, boxes in frame_boxes.items():
-        frame_boxes[frame] = np.array(boxes)
-
-    ids = {}
-    num_filter_box = 0
-    with open(res_file, "r") as f:
-        lines = list(f.readlines())
-    with open(res_file, "w") as f:
-        for line in lines:
-            if len(line) == 0:
-                continue
-
-            elements = line.strip().split(",")
-            frame_id, obj_id = elements[:2]
-            frame_id = int(frame_id)
-            obj_id = int(obj_id)
-            x1, y1, w, h = elements[2:6]
-            x1, y1, w, h = float(x1), float(y1), float(w), float(h)
-            x2 = x1 + w - 1
-            y2 = y1 + h - 1
-            if obj_id not in ids:
-                # track initialization.
-                if frame_id not in frame_boxes:
-                    num_filter_box += 1
-                    print("filter init box {} {}".format(frame_id, obj_id))
-                    continue
-                pub_dt_boxes = frame_boxes[frame_id]
-                dt_box = np.array([[x1, y1, x2, y2]])
-                if filter_iou:
-                    max_iou = bbox_iou(dt_box, pub_dt_boxes).max()
-                    if max_iou < 0.5:
-                        num_filter_box += 1
-                        print("filter init box {} {}".format(frame_id, obj_id))
-                        continue
-                else:
-                    pub_dt_centers = (pub_dt_boxes[:, :2] + pub_dt_boxes[:, 2:4]) * 0.5
-                    x_inside = (dt_box[0, 0] <= pub_dt_centers[:, 0]) & (
-                        dt_box[0, 2] >= pub_dt_centers[:, 0]
-                    )
-                    y_inside = (dt_box[0, 1] <= pub_dt_centers[:, 1]) & (
-                        dt_box[0, 3] >= pub_dt_centers[:, 1]
-                    )
-                    center_inside: np.ndarray = x_inside & y_inside
-                    if not center_inside.any():
-                        num_filter_box += 1
-                        print("filter init box {} {}".format(frame_id, obj_id))
-                        continue
-                print("save init track {} {}".format(frame_id, obj_id))
-                ids[obj_id] = True
-            f.write(line)
-
-    print("totally {} boxes are filtered.".format(num_filter_box))
 
 
 def get_rotate_mat(theta):
@@ -796,210 +712,44 @@ class Detector(object):
         return time_cost
 
 
-def getBboxesAndLabels_icd131(annotations):
-    bboxes = []
-    labels = []
-    polys = []
-    bboxes_ignore = []
-    labels_ignore = []
-    polys_ignore = []
-    Transcriptions = []
-    IDs = []
-    rotates = []
-    confidences = []
-    # points_lists = [] # does not contain the ignored polygons.
-    for annotation in annotations:
-        object_boxes = []
-        for point in annotation:
-            object_boxes.append([int(point.attrib["x"]), int(point.attrib["y"])])
-
-        points = np.array(object_boxes).reshape((-1))
-        points = cv2.minAreaRect(points.reshape((4, 2)))
-        points = cv2.boxPoints(points).reshape((-1))
-        IDs.append(annotation.attrib["ID"])
-        Transcriptions.append(annotation.attrib["Transcription"])
-        #         confidences.append(annotation.attrib["score"])
-        confidences.append(1)
-        bboxes.append(points)
-
-    if bboxes:
-        IDs = np.array(IDs, dtype=np.int64)
-        bboxes = np.array(bboxes, dtype=np.float32)
-    else:
-        bboxes = np.zeros((0, 8), dtype=np.float32)
-        IDs = np.array([], dtype=np.int64)
-        Transcriptions = []
-        confidences = []
-
-    return bboxes, IDs, Transcriptions, confidences
+num_format = "{:,}".format
 
 
-def parse_xml_rec(annotation_path):
-    utf8_parser = ET.XMLParser(encoding="gbk")
-    with open(annotation_path, "r", encoding="gbk") as load_f:
-        tree = ET.parse(load_f, parser=utf8_parser)
-    root = tree.getroot()
-
-    ann_dict = {}
-    for idx, child in enumerate(root):
-        bboxes, IDs, Transcriptions, confidences = getBboxesAndLabels_icd131(child)
-        ann_dict[child.attrib["ID"]] = [bboxes, IDs, Transcriptions, confidences]
-    return ann_dict
+def count_parameters(model: nn.Module) -> str:
+    """Count the number of learnable parameters of a model"""
+    return num_format(sum(p.numel() for p in model.parameters() if p.requires_grad))
 
 
-# OrderedDict
-def sort_key(old_dict, reverse=False):
-    keys = [int(i) for i in old_dict.keys()]
-    keys = sorted(keys, reverse=reverse)
-
-    new_dict = OrderedDict()
-
-    for key in keys:
-        new_dict[str(key)] = old_dict[str(key)]
-    return new_dict
-
-
-def getid_text(new_xml_dir_):
-    voc_dict = {
-        "res_video_11.xml": "Video_11_4_1_GT_voc.txt",
-        "res_video_15.xml": "Video_15_4_1_GT_voc.txt",
-        "res_video_17.xml": "Video_17_3_1_GT_voc.txt",
-        "res_video_1.xml": "Video_1_1_2_GT_voc.txt",
-        "res_video_20.xml": "Video_20_5_1_GT_voc.txt",
-        "res_video_22.xml": "Video_22_5_1_GT_voc.txt",
-        "res_video_23.xml": "Video_23_5_2_GT_voc.txt",
-        "res_video_24.xml": "Video_24_5_2_GT_voc.txt",
-        "res_video_30.xml": "Video_30_2_3_GT_voc.txt",
-        "res_video_32.xml": "Video_32_2_3_GT_voc.txt",
-        "res_video_34.xml": "Video_34_2_3_GT_voc.txt",
-        "res_video_35.xml": "Video_35_2_3_GT_voc.txt",
-        "res_video_38.xml": "Video_38_2_3_GT_voc.txt",
-        "res_video_39.xml": "Video_39_2_3_GT_voc.txt",
-        "res_video_43.xml": "Video_43_6_4_GT_voc.txt",
-        "res_video_44.xml": "Video_44_6_4_GT_voc.txt",
-        "res_video_48.xml": "Video_48_6_4_GT_voc.txt",
-        "res_video_49.xml": "Video_49_6_4_GT_voc.txt",
-        "res_video_50.xml": "Video_50_7_4_GT_voc.txt",
-        "res_video_53.xml": "Video_53_7_4_GT_voc.txt",
-        "res_video_55.xml": "Video_55_3_2_GT_voc.txt",
-        "res_video_5.xml": "Video_5_3_2_GT_voc.txt",
-        "res_video_6.xml": "Video_6_3_2_GT_voc.txt",
-        "res_video_9.xml": "Video_9_1_1_GT_voc.txt",
-    }
-
-    for xml in tqdm(os.listdir(new_xml_dir_)):
-        id_trans = {}
-        id_cond = {}
-        if ".txt" in xml or "ipynb" in xml:
-            continue
-
-        lines = []
-        xml_one = os.path.join(new_xml_dir_, xml)
-        ann = parse_xml_rec(xml_one)
-        for frame_id_ann in ann:
-            points, IDs, Transcriptions, confidences = ann[frame_id_ann]
-            for ids, trans, confidence in zip(IDs, Transcriptions, confidences):
-                if str(ids) in id_trans:
-                    id_trans[str(ids)].append(trans)
-                    id_cond[str(ids)].append(float(confidence))
-                else:
-                    id_trans[str(ids)] = [trans]
-                    id_cond[str(ids)] = [float(confidence)]
-
-        id_trans = sort_key(id_trans)
-        id_cond = sort_key(id_cond)
-
-        for i in id_trans:
-            txts = id_trans[i]
-            confidences = id_cond[i]
-            txt = max(txts, key=txts.count)
-
-            #             sco = 0
-            #             txt = txts[0]
-            #             for txt1,confident in zip(txts,confidences):
-            #                 if confident>sco:
-            #                     sco = confident
-            #                     txt = txt1
-
-            lines.append('"' + i + '"' + "," + '"' + txt + '"' + "\n")
-        write_lines(os.path.join(new_xml_dir_, xml.replace("xml", "txt")), lines)
-
-
-def sub_processor(pid: int, args, video_list: List[str]):
+def sub_processor(pid: int, args: ArgParser, video_list: List[str]):
     torch.cuda.set_device(pid)
     # load model and weights
     detr, _, _ = build_model(args)
     detr = load_model(detr, args.resume)
+    print("Num parameters", count_parameters(detr))
     detr = detr.cuda()
     detr.eval()
-    
-    video_list = ['adv', 'tokyo_street']
+
+    video_list = ["adv", "tokyo_street"]
 
     # 1. For each video
     for video in video_list:
         print(video)
         det = Detector(args, model=detr, seq_num=video)
         time_cost = det.detect(vis=args.show)
+        print("time_cost", time_cost)
 
     return 0
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        "DETR training and evaluation script", parents=[get_args_parser()]
-    )
-    args = parser.parse_args()
+    args = ArgParser().parse_args()
     if args.output_dir:
         Path(args.output_dir).mkdir(parents=True, exist_ok=True)
-
-    # if "BOVText" in args.data_txt_path_val:
-    #     args.mot_path = "/share/wuweijia/MyBenchMark/MMVText/BOVTextV2/Test/Frames"
-    #     seq_nums = []
-    #     for seq in os.listdir(args.mot_path):
-    #         for video_name in os.listdir(os.path.join(args.mot_path, seq)):
-    #             selected_file = [
-    #                 #                     "Cls27_Education_Cls27_Education_video56"
-    #                 "Cls16_Government_Cls16_Government_video15",
-    #                 "Cls1_Livestreaming_Cls1_Livestreaming_video39",
-    #                 "Cls24_Fishery_Cls24_Fishery_video79",
-    #             ]
-
-    #             print(seq + "_" + video_name)
-
-    #             if seq + "_" + video_name not in selected_file:
-    #                 continue
-
-    #             seq_nums.append(os.path.join(seq, video_name))
-    # else:
-    #     raise NotImplementedError()
 
     seq_nums = []
 
     accs = []
     seqs = []
 
-    result_dict = mp.Manager().dict()
-    mp = mp.get_context("spawn")
-    # thread_num = args.thread_num
-    processes = []
-    # per_thread_video_num = int(len(seq_nums) / thread_num)
-
     print("Start inference")
-    # for i in range(thread_num):
-    #     if i == thread_num - 1:
-    #         sub_video_list = seq_nums[i * per_thread_video_num :]
-    #     else:
-    #         sub_video_list = seq_nums[
-    #             i * per_thread_video_num : (i + 1) * per_thread_video_num
-    #         ]
-
-    #     p = mp.Process(target=sub_processor, args=(i, args, sub_video_list))
-    #     p.start()
-    #     processes.append(p)
-
-    # for p in processes:
-    #     p.join()
-
     sub_processor(0, args, seq_nums)
-
-    result_dict = dict(result_dict)
