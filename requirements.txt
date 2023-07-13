@@ -12,3 +12,5 @@ Polygon3
 seaborn
 motmetrics
 typed-argument-parser
+streamlit
+stqdm

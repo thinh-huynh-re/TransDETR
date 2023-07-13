@@ -330,7 +330,7 @@ class ArgParser(Tap):
     coco_panoptic_path: Optional[str] = None
     remove_difficult: Optional[bool] = False
 
-    output_dir: Optional[str] = "data/outputs"
+    output_dir: Optional[str] = "data/outputs/test"
     device: Optional[str] = "cuda"
     seed: Optional[int] = 42
     resume: Optional[str] = "weights/pretrain_COCOText_checkpoint.pth"

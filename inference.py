@@ -17,7 +17,7 @@ from util.tool import load_model
 from argparser import ArgParser
 
 from util.evaluation import Evaluator
-from tqdm import tqdm
+from stqdm import stqdm
 import math
 
 from detectron2.structures import Instances
@@ -390,11 +390,11 @@ def load_img_from_file(f_path):
 
 
 class Detector(object):
-    def __init__(self, args, model, seq_num: str):
+    def __init__(self, args: ArgParser, model: nn.Module, video_name: str):
         self.args = args
         self.detr = model
 
-        self.seq_num = seq_num
+        self.seq_num = video_name
         img_list = os.listdir(os.path.join(self.args.mot_path, self.seq_num))
         img_list = [_ for _ in img_list if ("jpg" in _) or ("png" in _)]
 
@@ -429,7 +429,7 @@ class Detector(object):
         self.std = [0.229, 0.224, 0.225]
 
         self.save_path = os.path.join(
-            self.args.output_dir, "results/{}".format(seq_num)
+            self.args.output_dir, "results/{}".format(video_name)
         )
         os.makedirs(self.save_path, exist_ok=True)
 
@@ -630,7 +630,7 @@ class Detector(object):
         rgbs = {}
         annotation = {}
 
-        for i in tqdm(range(0, self.img_len)):
+        for i in stqdm(range(0, self.img_len)):
             img, targets = load_img_from_file(self.img_list[i])
 
             cur_img, ori_img = self.init_img(img)
@@ -720,21 +720,25 @@ def count_parameters(model: nn.Module) -> str:
     return num_format(sum(p.numel() for p in model.parameters() if p.requires_grad))
 
 
-def sub_processor(pid: int, args: ArgParser, video_list: List[str]):
-    torch.cuda.set_device(pid)
-    # load model and weights
+def load_model_for_inference(args: ArgParser) -> nn.Module:
     detr, _, _ = build_model(args)
     detr = load_model(detr, args.resume)
     print("Num parameters", count_parameters(detr))
     detr = detr.cuda()
     detr.eval()
+    return detr
 
+
+def sub_processor(pid: int, args: ArgParser, video_list: List[str]):
+    torch.cuda.set_device(pid)
+
+    detr = load_model_for_inference(args)
     video_list = ["adv", "tokyo_street"]
 
     # 1. For each video
     for video in video_list:
         print(video)
-        det = Detector(args, model=detr, seq_num=video)
+        det = Detector(args, model=detr, video_name=video)
         time_cost = det.detect(vis=args.show)
         print("time_cost", time_cost)
 
@@ -748,8 +752,5 @@ if __name__ == "__main__":
 
     seq_nums = []
 
-    accs = []
-    seqs = []
-
     print("Start inference")
-    sub_processor(0, args, seq_nums)
+    sub_processor(0, args, video_list=["adv", "tokyo_street"])

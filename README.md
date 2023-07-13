@@ -90,6 +90,7 @@ The codebases are built on top of [Deformable DETR](https://github.com/fundament
     conda install pytorch=1.5.1 torchvision=0.6.1 cudatoolkit=9.2 -c pytorch
     ```
   
+  
 * Other requirements
     ```bash
     pip install -r requirements.txt
@@ -100,6 +101,14 @@ The codebases are built on top of [Deformable DETR](https://github.com/fundament
     cd ./models/ops
     sh ./make.sh
     ```
+
+* Install mmcv
+
+- Download https://download.openmmlab.com/mmcv/dist/cu118/torch2.0/index.html (Source: https://mmcv.readthedocs.io/en/latest/get_started/installation.html)
+
+```bash
+pip install installation/mmcv-2.0.0-cp310-cp310-manylinux1_x86_64.whl
+```
 ## Usage
 
 ### Dataset preparation
@@ -230,6 +239,12 @@ then run the script:
 ```bash 
 python tools/vis.py
 
+```
+
+#### Streamlit 
+
+```bash
+streamlit run app.py --server.port 9112 --browser.gatherUsageStats False --server.fileWatcherType none
 ```
 
 
