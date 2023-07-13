@@ -10,10 +10,11 @@ from torch.utils.cpp_extension import CUDAExtension
 
 requirements = ["torch", "torchvision"]
 
+
 # python setup.py build_ext --inplace
 def get_extensions():
     this_dir = os.path.dirname(os.path.abspath(__file__))
-    extensions_dir = os.path.join(this_dir,"src")
+    extensions_dir = os.path.join(this_dir, "src")
 
     main_file = glob.glob(os.path.join(extensions_dir, "*.cpp"))
     source_cpu = glob.glob(os.path.join(extensions_dir, "cpu", "*.cpp"))
@@ -52,12 +53,18 @@ def get_extensions():
 
     return ext_modules
 
+
 setup(
     name="rotate_roi",
     # version="0.1",
     # author="fmassa",
     # url="https://github.com/facebookresearch/maskrcnn-benchmark",
-    packages=find_packages(exclude=("configs", "tests",)),
+    packages=find_packages(
+        exclude=(
+            "configs",
+            "tests",
+        )
+    ),
     # install_requires=requirements,
     ext_modules=get_extensions(),
     cmdclass={"build_ext": torch.utils.cpp_extension.BuildExtension},

@@ -13,9 +13,12 @@ import torch
 from functools import partial
 from models.structures import Instances
 
+
 def to_cuda(samples, targets, device):
     samples = samples.to(device, non_blocking=True)
-    targets = [{k: v.to(device, non_blocking=True) for k, v in t.items()} for t in targets]
+    targets = [
+        {k: v.to(device, non_blocking=True) for k, v in t.items()} for t in targets
+    ]
     return samples, targets
 
 
@@ -50,10 +53,12 @@ def data_apply(data, check_func, apply_func):
 
 
 def data_dict_to_cuda(data_dict, device):
-    return data_apply(data_dict, is_tensor_or_instances, partial(tensor_to_cuda, device=device))
+    return data_apply(
+        data_dict, is_tensor_or_instances, partial(tensor_to_cuda, device=device)
+    )
 
 
-class data_prefetcher():
+class data_prefetcher:
     def __init__(self, loader, device, prefetch=True):
         self.loader = iter(loader)
         self.prefetch = prefetch
@@ -77,7 +82,9 @@ class data_prefetcher():
         # at the time we start copying to next_*:
         # self.stream.wait_stream(torch.cuda.current_stream())
         with torch.cuda.stream(self.stream):
-            self.next_samples, self.next_targets = to_cuda(self.next_samples, self.next_targets, self.device)
+            self.next_samples, self.next_targets = to_cuda(
+                self.next_samples, self.next_targets, self.device
+            )
             # more code for the alternative if record_stream() doesn't work:
             # copy_ will record the use of the pinned source tensor in this side stream.
             # self.next_input_gpu.copy_(self.next_input, non_blocking=True)

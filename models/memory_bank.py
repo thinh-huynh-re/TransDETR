@@ -45,7 +45,7 @@ class MemoryBank(nn.Module):
             self.spatial_attn = None
 
     def update(self, track_instances):
-        embed = track_instances.output_embedding[:, None]  #( N, 1, 256)
+        embed = track_instances.output_embedding[:, None]  # ( N, 1, 256)
         scores = track_instances.scores
         mem_padding_mask = track_instances.mem_padding_mask
         device = embed.device
@@ -63,9 +63,17 @@ class MemoryBank(nn.Module):
         if len(saved_embed) > 0:
             prev_embed = track_instances.mem_bank[saved_idxes]
             save_embed = self.save_proj(saved_embed)
-            mem_padding_mask[saved_idxes] = torch.cat([mem_padding_mask[saved_idxes, 1:], torch.zeros((len(saved_embed), 1), dtype=torch.bool, device=device)], dim=1)
+            mem_padding_mask[saved_idxes] = torch.cat(
+                [
+                    mem_padding_mask[saved_idxes, 1:],
+                    torch.zeros((len(saved_embed), 1), dtype=torch.bool, device=device),
+                ],
+                dim=1,
+            )
             track_instances.mem_bank = track_instances.mem_bank.clone()
-            track_instances.mem_bank[saved_idxes] = torch.cat([prev_embed[:, 1:], save_embed], dim=1)
+            track_instances.mem_bank[saved_idxes] = torch.cat(
+                [prev_embed[:, 1:], save_embed], dim=1
+            )
 
     def _forward_spatial_attn(self, track_instances):
         if len(track_instances) == 0:
@@ -74,13 +82,9 @@ class MemoryBank(nn.Module):
         embed = track_instances.output_embedding
         dim = embed.shape[-1]
         query_pos = track_instances.query_pos[:, :dim]
-        k = q = (embed + query_pos)
+        k = q = embed + query_pos
         v = embed
-        embed2 = self.spatial_attn(
-            q[:, None],
-            k[:, None],
-            v[:, None]
-        )[0][:, 0]
+        embed2 = self.spatial_attn(q[:, None], k[:, None], v[:, None])[0][:, 0]
         embed = self.spatial_norm1(embed + embed2)
         embed2 = self.spatial_fc2(F.relu(self.spatial_fc1(embed)))
         embed = self.spatial_norm2(embed + embed2)
@@ -88,7 +92,9 @@ class MemoryBank(nn.Module):
         return track_instances
 
     def _forward_track_cls(self, track_instances):
-        track_instances.track_scores = self.track_cls(track_instances.output_embedding)[..., 0]
+        track_instances.track_scores = self.track_cls(track_instances.output_embedding)[
+            ..., 0
+        ]
         return track_instances
 
     def _forward_temporal_attn(self, track_instances):
@@ -105,8 +111,10 @@ class MemoryBank(nn.Module):
             prev_embed = track_instances.mem_bank[valid_idxes]
             key_padding_mask = key_padding_mask[valid_idxes]
             embed2 = self.temporal_attn(
-                embed[None],                  # (num_track, dim) to (1, num_track, dim)
-                prev_embed.transpose(0, 1),   # (num_track, mem_len, dim) to (mem_len, num_track, dim)
+                embed[None],  # (num_track, dim) to (1, num_track, dim)
+                prev_embed.transpose(
+                    0, 1
+                ),  # (num_track, mem_len, dim) to (mem_len, num_track, dim)
                 prev_embed.transpose(0, 1),
                 key_padding_mask=key_padding_mask,
             )[0][0]
@@ -136,7 +144,7 @@ class MemoryBank(nn.Module):
 def build_memory_bank(args, dim_in, hidden_dim, dim_out):
     name = args.memory_bank_type
     memory_banks = {
-        'MemoryBank': MemoryBank,
+        "MemoryBank": MemoryBank,
     }
     assert name in memory_banks
     return memory_banks[name](args, dim_in, hidden_dim, dim_out)

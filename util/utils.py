@@ -8,29 +8,33 @@ import os
 from shapely.geometry import *
 import json
 
+
 def read_lines(p):
-    """return the text in a file in lines as a list """
+    """return the text in a file in lines as a list"""
     p = get_absolute_path(p)
-    f = open(p,'r')
+    f = open(p, "r")
     return f.readlines()
+
 
 def join_path(a, *p):
     return os.path.join(a, *p)
+
 
 def write_result_as_txt(image_name, bboxes, path):
     if not os.path.exists(path):
         os.makedirs(path)
 
-    filename = join_path(path, '%s.txt'%(image_name))
+    filename = join_path(path, "%s.txt" % (image_name))
     lines = []
     for b_idx, bbox in enumerate(bboxes):
         values = [int(v) for v in bbox]
-        line = "%d"%values[0]
+        line = "%d" % values[0]
         for v_id in range(1, len(values)):
-            line += ", %d"%values[v_id]
-        line += '\n'
+            line += ", %d" % values[v_id]
+        line += "\n"
         lines.append(line)
     write_lines(filename, lines)
+
 
 class MyEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -43,26 +47,27 @@ class MyEncoder(json.JSONEncoder):
         else:
             return super(MyEncoder, self).default(obj)
 
-def write_result_as_json(img_name,boxes_list,j_dict):
-    res_name = img_name.replace("gt","res")
+
+def write_result_as_json(img_name, boxes_list, j_dict):
+    res_name = img_name.replace("gt", "res")
     # print(res_name)
     j_dict_ = []
     for b_idx, bbox in enumerate(boxes_list):
-
-        pts = [(bbox[j],bbox[j+1]) for j in range(0,len(bbox),2)]
+        pts = [(bbox[j], bbox[j + 1]) for j in range(0, len(bbox), 2)]
         # pts = [i for i in reversed(pts)]
 
         try:
             pdet = Polygon(pts)
         except:
             print(pts)
-            assert (0), ('not a valid polygon', pts)
+            assert 0, ("not a valid polygon", pts)
 
         pRing = LinearRing(pts)
         try:
             if not pRing.is_ccw:
-                assert (0), (
-                    "Points are not clockwise. The coordinates of bounding quadrilaterals have to be given in clockwise order. Regarding the correct interpretation of 'clockwise' remember that the image coordinate system used is the standard one, with the image origin at the upper left, the X axis extending to the right and Y axis extending downwards.")
+                assert (
+                    0
+                ), "Points are not clockwise. The coordinates of bounding quadrilaterals have to be given in clockwise order. Regarding the correct interpretation of 'clockwise' remember that the image coordinate system used is the standard one, with the image origin at the upper left, the X axis extending to the right and Y axis extending downwards."
         except:
             print(res_name)
             print(pts)
@@ -74,21 +79,25 @@ def write_result_as_json(img_name,boxes_list,j_dict):
     j_dict.update({res_name: j_dict_})
     return j_dict
 
+
 def write_lines(p, lines):
     p = get_absolute_path(p)
     make_parent_dir(p)
-    with open(p, 'w') as f:
+    with open(p, "w") as f:
         for line in lines:
             f.write(line)
+
 
 def make_parent_dir(path):
     """make the parent directories for a file."""
     parent_dir = get_dir(path)
     mkdir(parent_dir)
 
+
 def exists(path):
     path = get_absolute_path(path)
     return os.path.exists(path)
+
 
 def mkdir(path):
     """
@@ -99,15 +108,17 @@ def mkdir(path):
         os.makedirs(path)
     return path
 
+
 def get_dir(path):
-    '''
+    """
     return the directory it belongs to.
     if path is a directory itself, itself will be return
-    '''
+    """
     path = get_absolute_path(path)
     if is_dir(path):
-        return path;
+        return path
     return os.path.split(path)[0]
+
 
 def is_dir(path):
     path = get_absolute_path(path)
@@ -118,6 +129,7 @@ def cvt2HeatmapImg(img):
     img = (np.clip(img, 0, 1) * 255).astype(np.uint8)
     img = cv2.applyColorMap(img, cv2.COLORMAP_JET)
     return img
+
 
 def debug(idx, img_name, imgs, output_root):
     if not os.path.exists(output_root):
@@ -133,17 +145,18 @@ def debug(idx, img_name, imgs, output_root):
         col.append(res)
     res = np.concatenate(col, axis=0)
 
-    cv2.imwrite(os.path.join(output_root , img_name), res)
+    cv2.imwrite(os.path.join(output_root, img_name), res)
+
 
 def show_img(imgs: np.ndarray, color=False):
     if (len(imgs.shape) == 3 and color) or (len(imgs.shape) == 2 and not color):
         imgs = np.expand_dims(imgs, axis=0)
     for img in imgs:
         plt.figure()
-        plt.imshow(img, cmap=None if color else 'gray')
+        plt.imshow(img, cmap=None if color else "gray")
 
 
-def draw_bbox(img_path, result, color=(255, 0, 0),thickness=2):
+def draw_bbox(img_path, result, color=(255, 0, 0), thickness=2):
     if isinstance(img_path, str):
         img_path = cv2.imread(img_path)
         # img_path = cv2.cvtColor(img_path, cv2.COLOR_BGR2RGB)
@@ -160,43 +173,52 @@ def draw_bbox(img_path, result, color=(255, 0, 0),thickness=2):
 def setup_logger(log_file_path: str = None):
     import logging
     from colorlog import ColoredFormatter
-    logging.basicConfig(filename=log_file_path, format='%(asctime)s %(levelname)-8s %(filename)s: %(message)s',
-                        # 定义输出log的格式
-                        datefmt='%Y-%m-%d %H:%M:%S', )
-    """Return a logger with a default ColoredFormatter."""
-    formatter = ColoredFormatter("%(asctime)s %(log_color)s%(levelname)-8s %(reset)s %(filename)s: %(message)s",
-                                 datefmt='%Y-%m-%d %H:%M:%S',
-                                 reset=True,
-                                 log_colors={
-                                     'DEBUG': 'blue',
-                                     'INFO': 'green',
-                                     'WARNING': 'yellow',
-                                     'ERROR': 'red',
-                                     'CRITICAL': 'red',
-                                 })
 
-    logger = logging.getLogger('project')
+    logging.basicConfig(
+        filename=log_file_path,
+        format="%(asctime)s %(levelname)-8s %(filename)s: %(message)s",
+        # 定义输出log的格式
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
+    """Return a logger with a default ColoredFormatter."""
+    formatter = ColoredFormatter(
+        "%(asctime)s %(log_color)s%(levelname)-8s %(reset)s %(filename)s: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        reset=True,
+        log_colors={
+            "DEBUG": "blue",
+            "INFO": "green",
+            "WARNING": "yellow",
+            "ERROR": "red",
+            "CRITICAL": "red",
+        },
+    )
+
+    logger = logging.getLogger("project")
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     logger.setLevel(logging.DEBUG)
-    logger.info('logger init finished')
+    logger.info("logger init finished")
     return logger
 
+
 def remove_all(s, sub):
-    return replace_all(s, sub, '')
+    return replace_all(s, sub, "")
 
 
-def split(s, splitter, reg = False):
+def split(s, splitter, reg=False):
     if not reg:
         return s.split(splitter)
     import re
+
     return re.split(splitter, s)
 
 
 def replace_all(s, old, new, reg=False):
     if reg:
         import re
+
         targets = re.findall(old, s)
         for t in targets:
             s = s.replace(t, new)
@@ -204,8 +226,10 @@ def replace_all(s, old, new, reg=False):
         s = s.replace(old, new)
     return s
 
+
 class AverageMeter(object):
     """Computes and stores the average and current value"""
+
     def __init__(self):
         self.reset()
 
@@ -221,21 +245,24 @@ class AverageMeter(object):
         self.count += n
         self.avg = self.sum / self.count
 
+
 def save_checkpoint(checkpoint_path, model, optimizer, epoch, logger):
-    state = {'state_dict': model.state_dict(),
-             'optimizer': optimizer.state_dict(),
-             'epoch': epoch}
+    state = {
+        "state_dict": model.state_dict(),
+        "optimizer": optimizer.state_dict(),
+        "epoch": epoch,
+    }
     torch.save(state, checkpoint_path)
-    logger.info('models saved to %s' % checkpoint_path)
+    logger.info("models saved to %s" % checkpoint_path)
 
 
 def load_checkpoint(checkpoint_path, model, logger, device, optimizer=None):
     state = torch.load(checkpoint_path, map_location=device)
-    model.load_state_dict(state['state_dict'])
+    model.load_state_dict(state["state_dict"])
     if optimizer is not None:
-        optimizer.load_state_dict(state['optimizer'])
-    start_epoch = state['epoch']
-    logger.info('models loaded from %s' % checkpoint_path)
+        optimizer.load_state_dict(state["optimizer"])
+    start_epoch = state["epoch"]
+    logger.info("models loaded from %s" % checkpoint_path)
     return start_epoch
 
 
@@ -246,16 +273,17 @@ def exe_time(func):
         back = func(*args, **args2)
         print("{} cost {:.3f}s".format(func.__name__, time.time() - t0))
         return back
+
     return newFunc
 
 
 def get_absolute_path(p):
-    if p.startswith('~'):
+    if p.startswith("~"):
         p = os.path.expanduser(p)
     return os.path.abspath(p)
 
 
-def ls(path='.', suffix=None):
+def ls(path=".", suffix=None):
     """
     list files in a directory.
     return file names in a list
@@ -273,13 +301,16 @@ def ls(path='.', suffix=None):
 
     return filtered
 
+
 def is_str(s):
     return type(s) == str
+
 
 def to_lowercase(s):
     return str.lower(s)
 
-def ends_with(s, suffix, ignore_case = False):
+
+def ends_with(s, suffix, ignore_case=False):
     """
     suffix: str, list, or tuple
     """

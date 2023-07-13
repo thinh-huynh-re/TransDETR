@@ -28,10 +28,9 @@ class HungarianMatcher(nn.Module):
     while the others are un-matched (and thus treated as non-objects).
     """
 
-    def __init__(self,
-                 cost_class: float = 1,
-                 cost_bbox: float = 1,
-                 cost_giou: float = 1):
+    def __init__(
+        self, cost_class: float = 1, cost_bbox: float = 1, cost_giou: float = 1
+    ):
         """Creates the matcher
 
         Params:
@@ -43,10 +42,12 @@ class HungarianMatcher(nn.Module):
         self.cost_class = cost_class
         self.cost_bbox = cost_bbox
         self.cost_giou = cost_giou
-        assert cost_class != 0 or cost_bbox != 0 or cost_giou != 0, "all costs cant be 0"
+        assert (
+            cost_class != 0 or cost_bbox != 0 or cost_giou != 0
+        ), "all costs cant be 0"
 
     def forward(self, outputs, targets, use_focal=True):
-        """ Performs the matching
+        """Performs the matching
 
         Params:
             outputs: This is a dict that contains at least these entries:
@@ -72,10 +73,16 @@ class HungarianMatcher(nn.Module):
             if use_focal:
                 out_prob = outputs["pred_logits"].flatten(0, 1).sigmoid()
             else:
-                out_prob = outputs["pred_logits"].flatten(0, 1).softmax(-1)  # [batch_size * num_queries, num_classes]
-            out_bbox = outputs["pred_boxes"].flatten(0, 1)  # [batch_size * num_queries, 4]
-            out_rotate = (outputs["pred_rotate"].flatten(0, 1).sigmoid() - 0.5) * math.pi
-            
+                out_prob = (
+                    outputs["pred_logits"].flatten(0, 1).softmax(-1)
+                )  # [batch_size * num_queries, num_classes]
+            out_bbox = outputs["pred_boxes"].flatten(
+                0, 1
+            )  # [batch_size * num_queries, 4]
+            out_rotate = (
+                outputs["pred_rotate"].flatten(0, 1).sigmoid() - 0.5
+            ) * math.pi
+
             # Also concat the target labels and boxes
             if isinstance(targets[0], Instances):
                 tgt_ids = torch.cat([gt_per_img.labels for gt_per_img in targets])
@@ -85,36 +92,46 @@ class HungarianMatcher(nn.Module):
                 tgt_ids = torch.cat([v["labels"] for v in targets])
                 tgt_bbox = torch.cat([v["boxes"] for v in targets])
                 tgt_rotate = torch.cat([v["rotate"] for v in targets])
-            
-#             print("out_rotate",out_rotate.shape)
-#             print("tgt_rotate",tgt_rotate.shape)
+
+            #             print("out_rotate",out_rotate.shape)
+            #             print("tgt_rotate",tgt_rotate.shape)
             # Compute the rotate cost.
-            cost_angle = - torch.cos(out_rotate - tgt_rotate)
-#             print(out_prob.shape)
-#             print(tgt_ids.shape)
-            
+            cost_angle = -torch.cos(out_rotate - tgt_rotate)
+            #             print(out_prob.shape)
+            #             print(tgt_ids.shape)
+
             # Compute the classification cost.
             if use_focal:
                 alpha = 0.25
                 gamma = 2.0
-                neg_cost_class = (1 - alpha) * (out_prob ** gamma) * (-(1 - out_prob + 1e-8).log())
-                pos_cost_class = alpha * ((1 - out_prob) ** gamma) * (-(out_prob + 1e-8).log())
+                neg_cost_class = (
+                    (1 - alpha) * (out_prob**gamma) * (-(1 - out_prob + 1e-8).log())
+                )
+                pos_cost_class = (
+                    alpha * ((1 - out_prob) ** gamma) * (-(out_prob + 1e-8).log())
+                )
                 cost_class = pos_cost_class[:, tgt_ids] - neg_cost_class[:, tgt_ids]
             else:
                 # Compute the classification cost. Contrary to the loss, we don't use the NLL,
                 # but approximate it in 1 - proba[target class].
                 # The 1 is a constant that doesn't change the matching, it can be ommitted.
                 cost_class = -out_prob[:, tgt_ids]
-            
+
             # Compute the L1 cost between boxes
             cost_bbox = torch.cdist(out_bbox, tgt_bbox, p=1)
 
             # Compute the giou cost betwen boxes
-            cost_giou = -generalized_box_iou(box_cxcywh_to_xyxy(out_bbox),
-                                             box_cxcywh_to_xyxy(tgt_bbox))
+            cost_giou = -generalized_box_iou(
+                box_cxcywh_to_xyxy(out_bbox), box_cxcywh_to_xyxy(tgt_bbox)
+            )
 
             # Final cost matrix
-            C = self.cost_bbox * cost_bbox + self.cost_class * cost_class + self.cost_giou * cost_giou + cost_angle * 50.
+            C = (
+                self.cost_bbox * cost_bbox
+                + self.cost_class * cost_class
+                + self.cost_giou * cost_giou
+                + cost_angle * 50.0
+            )
             C = C.view(bs, num_queries, -1).cpu()
 
             if isinstance(targets[0], Instances):
@@ -122,11 +139,21 @@ class HungarianMatcher(nn.Module):
             else:
                 sizes = [len(v["boxes"]) for v in targets]
 
-            indices = [linear_sum_assignment(c[i]) for i, c in enumerate(C.split(sizes, -1))]
-            return [(torch.as_tensor(i, dtype=torch.int64), torch.as_tensor(j, dtype=torch.int64)) for i, j in indices]
+            indices = [
+                linear_sum_assignment(c[i]) for i, c in enumerate(C.split(sizes, -1))
+            ]
+            return [
+                (
+                    torch.as_tensor(i, dtype=torch.int64),
+                    torch.as_tensor(j, dtype=torch.int64),
+                )
+                for i, j in indices
+            ]
 
 
 def build_matcher(args):
-    return HungarianMatcher(cost_class=args.set_cost_class,
-                            cost_bbox=args.set_cost_bbox,
-                            cost_giou=args.set_cost_giou)
+    return HungarianMatcher(
+        cost_class=args.set_cost_class,
+        cost_bbox=args.set_cost_bbox,
+        cost_giou=args.set_cost_giou,
+    )

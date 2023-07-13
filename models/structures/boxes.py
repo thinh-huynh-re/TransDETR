@@ -10,7 +10,10 @@ from typing import List, Tuple, Union
 import torch
 from torch import device
 from shapely.geometry import Polygon, MultiPoint
+
 _RawBoxType = Union[List[float], Tuple[float, ...], torch.Tensor, np.ndarray]
+
+
 def _maybe_jit_unused(x):
     return x
 
@@ -47,7 +50,9 @@ class BoxMode(IntEnum):
     """
 
     @staticmethod
-    def convert(box: _RawBoxType, from_mode: "BoxMode", to_mode: "BoxMode") -> _RawBoxType:
+    def convert(
+        box: _RawBoxType, from_mode: "BoxMode", to_mode: "BoxMode"
+    ) -> _RawBoxType:
         """
         Args:
             box: can be a k-tuple, k-list or an Nxk array/tensor, where k = 4 or 5
@@ -75,7 +80,10 @@ class BoxMode(IntEnum):
             else:
                 arr = box.clone()
 
-        assert to_mode not in [BoxMode.XYXY_REL, BoxMode.XYWH_REL] and from_mode not in [
+        assert to_mode not in [
+            BoxMode.XYXY_REL,
+            BoxMode.XYWH_REL,
+        ] and from_mode not in [
             BoxMode.XYXY_REL,
             BoxMode.XYWH_REL,
         ], "Relative mode not yet supported!"
@@ -150,7 +158,9 @@ class Boxes:
         Args:
             tensor (Tensor[float]): a Nx4 matrix.  Each row is (x1, y1, x2, y2).
         """
-        device = tensor.device if isinstance(tensor, torch.Tensor) else torch.device("cpu")
+        device = (
+            tensor.device if isinstance(tensor, torch.Tensor) else torch.device("cpu")
+        )
         tensor = torch.as_tensor(tensor, dtype=torch.float32, device=device)
         if tensor.numel() == 0:
             # Use reshape, so we don't end up creating a new tensor that does not depend on
@@ -238,7 +248,9 @@ class Boxes:
         if isinstance(item, int):
             return Boxes(self.tensor[item].view(1, -1))
         b = self.tensor[item]
-        assert b.dim() == 2, "Indexing on Boxes with {} failed to return a matrix!".format(item)
+        assert (
+            b.dim() == 2
+        ), "Indexing on Boxes with {} failed to return a matrix!".format(item)
         return Boxes(b)
 
     def __len__(self) -> int:
@@ -247,7 +259,9 @@ class Boxes:
     def __repr__(self) -> str:
         return "Boxes(" + str(self.tensor) + ")"
 
-    def inside_box(self, box_size: Tuple[int, int], boundary_threshold: int = 0) -> torch.Tensor:
+    def inside_box(
+        self, box_size: Tuple[int, int], boundary_threshold: int = 0
+    ) -> torch.Tensor:
         """
         Args:
             box_size (height, width): Size of the reference box.
@@ -411,9 +425,13 @@ def matched_boxlist_iou(boxes1: Boxes, boxes2: Boxes) -> torch.Tensor:
     iou = inter / (area1 + area2 - inter)  # [N]
     return iou
 
+
 def get_rotate_mat(theta):
-	'''positive theta value means rotate clockwise'''
-	return np.array([[math.cos(theta), -math.sin(theta)], [math.sin(theta), math.cos(theta)]])
+    """positive theta value means rotate clockwise"""
+    return np.array(
+        [[math.cos(theta), -math.sin(theta)], [math.sin(theta), math.cos(theta)]]
+    )
+
 
 def matched_boxlist_rotated_iou(boxes1, boxes2, angles1, angles2) -> torch.Tensor:
     """
@@ -432,35 +450,57 @@ def matched_boxlist_rotated_iou(boxes1, boxes2, angles1, angles2) -> torch.Tenso
     ), "boxlists should have the same" "number of entries, got {}, {}".format(
         len(boxes1), len(boxes2)
     )
-    
+
     ious = []
-    for box1,box2,angle1,angle2 in zip(boxes1, boxes2, angles1, angles2):
-        x_min,y_min, x_max, y_max = [i.cpu().detach().numpy() for i in box1[:4]]
-#         print(x_min,y_min, x_max, y_max)
+    for box1, box2, angle1, angle2 in zip(boxes1, boxes2, angles1, angles2):
+        x_min, y_min, x_max, y_max = [i.cpu().detach().numpy() for i in box1[:4]]
+        #         print(x_min,y_min, x_max, y_max)
         rotate = angle1
         rotate_mat = get_rotate_mat(-rotate)
-        temp_x = np.array([[x_min, x_max, x_max, x_min]]) - (x_min+x_max)/2
-        temp_y = np.array([[y_min, y_min, y_max, y_max]]) - (y_min+y_max)/2
+        temp_x = np.array([[x_min, x_max, x_max, x_min]]) - (x_min + x_max) / 2
+        temp_y = np.array([[y_min, y_min, y_max, y_max]]) - (y_min + y_max) / 2
         coordidates = np.concatenate((temp_x, temp_y), axis=0)
         res = np.dot(rotate_mat, coordidates)
-        res[0,:] += (x_min+x_max)/2
-        res[1,:] += (y_min+y_max)/2
-        bbox1 = np.array([res[0,0], res[1,0], res[0,1], res[1,1], res[0,2], res[1,2],res[0,3], res[1,3]]).reshape(4, 2)
-        
-        x_min,y_min, x_max, y_max = [i.cpu().detach().numpy() for i in box2[:4]]
+        res[0, :] += (x_min + x_max) / 2
+        res[1, :] += (y_min + y_max) / 2
+        bbox1 = np.array(
+            [
+                res[0, 0],
+                res[1, 0],
+                res[0, 1],
+                res[1, 1],
+                res[0, 2],
+                res[1, 2],
+                res[0, 3],
+                res[1, 3],
+            ]
+        ).reshape(4, 2)
+
+        x_min, y_min, x_max, y_max = [i.cpu().detach().numpy() for i in box2[:4]]
         rotate = angle2
         rotate_mat = get_rotate_mat(-rotate)
-        temp_x = np.array([[x_min, x_max, x_max, x_min]]) - (x_min+x_max)/2
-        temp_y = np.array([[y_min, y_min, y_max, y_max]]) - (y_min+y_max)/2
+        temp_x = np.array([[x_min, x_max, x_max, x_min]]) - (x_min + x_max) / 2
+        temp_y = np.array([[y_min, y_min, y_max, y_max]]) - (y_min + y_max) / 2
         coordidates = np.concatenate((temp_x, temp_y), axis=0)
         res = np.dot(rotate_mat, coordidates)
-        res[0,:] += (x_min+x_max)/2
-        res[1,:] += (y_min+y_max)/2
-        bbox2 = np.array([res[0,0], res[1,0], res[0,1], res[1,1], res[0,2], res[1,2],res[0,3], res[1,3]]).reshape(4, 2)
-        
+        res[0, :] += (x_min + x_max) / 2
+        res[1, :] += (y_min + y_max) / 2
+        bbox2 = np.array(
+            [
+                res[0, 0],
+                res[1, 0],
+                res[0, 1],
+                res[1, 1],
+                res[0, 2],
+                res[1, 2],
+                res[0, 3],
+                res[1, 3],
+            ]
+        ).reshape(4, 2)
+
         poly1 = Polygon(bbox1).convex_hull
         poly2 = Polygon(bbox2).convex_hull
-        if poly1.area  < 0.00001 or poly2.area < 0.00001:
+        if poly1.area < 0.00001 or poly2.area < 0.00001:
             return 0.0
         if not poly1.intersects(poly2):
             iou = 0
@@ -469,5 +509,5 @@ def matched_boxlist_rotated_iou(boxes1, boxes2, angles1, angles2) -> torch.Tenso
             union_area = poly1.area + poly2.area - inter_area
             iou = float(inter_area) / union_area
         ious.append(iou)
-    
-    return torch.as_tensor(ious, dtype=boxes1.dtype,device=boxes1.device)
+
+    return torch.as_tensor(ious, dtype=boxes1.dtype, device=boxes1.device)
