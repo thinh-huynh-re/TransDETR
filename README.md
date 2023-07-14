@@ -54,7 +54,12 @@ The codebases are built on top of [Deformable DETR](https://github.com/fundament
     pip install installation/mmcv-2.0.0-cp310-cp310-manylinux1_x86_64.whl
     ```
 
+* Install detectron2
 
+    ```bash
+    git clone https://github.com/facebookresearch/detectron2.git
+    python -m pip install -e detectron2
+    ```
 
 #### Streamlit 
 
