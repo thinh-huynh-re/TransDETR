@@ -19,6 +19,9 @@ Link to our new benchmark [BOVText: A Large-Scale, Bilingual Open World Dataset 
 ## Demo
 <img src="demo.gif" width="400"/>  <img src="demo1.gif" width="400"/>
 
+## Data structure
+
+![](data.png)
 
 ## Installation
 The codebases are built on top of [Deformable DETR](https://github.com/fundamentalvision/Deformable-DETR) and [MOTR](https://github.com/megvii-model/MOTR).
@@ -39,7 +42,7 @@ The codebases are built on top of [Deformable DETR](https://github.com/fundament
     pip install -r requirements.txt
     ```
 
-* Build MultiScaleDeformableAttention and Rotated ROIAlign
+* Build MultiScaleDeformableAttention
     ```bash
     cd ./models/ops
     sh ./make.sh
