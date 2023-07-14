@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import List
 import streamlit as st
 import cv2
 import os
@@ -8,6 +9,7 @@ from PIL import Image
 from argparser import ArgParser
 from inference import Detector, count_parameters, load_model_for_inference
 from glob import glob
+from moviepy.video.io.ImageSequenceClip import ImageSequenceClip
 
 st.title("TransDETR")
 st.image("pipeline.png")
@@ -80,21 +82,14 @@ if mode == "Inference":
                 print("fps", fps)
                 out_path = f"data/outputs/upload/videos/{fname_wo_ext}.avi"
                 final_out_path = f"data/outputs/upload/videos/{fname_wo_ext}.mp4"
-                out = cv2.VideoWriter(
-                    out_path,
-                    cv2.VideoWriter_fourcc("M", "J", "P", "G"),
-                    fps,
-                    first_frame.size,
-                )
+
+                frames_path: List[str] = []
                 for i in stqdm(range(num_frames)):
-                    out.write(cv2.imread(f"{dirpath}/{i}.jpg"))
-                out.release()
+                    frames_path.append(f"{dirpath}/{i}.jpg")
                 vf.release()
 
-                os.system(
-                    f'ffmpeg -y -i "{out_path}" -vcodec libx264 "{final_out_path}" -hide_banner -loglevel error'
-                )
-                os.system(f"rm {out_path}")
+                clip = ImageSequenceClip(frames_path, fps=fps)
+                clip.write_videofile(final_out_path, codec="libx264")
 
         st.video(final_out_path)
 
